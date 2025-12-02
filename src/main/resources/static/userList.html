@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前后端分离的用户列表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+<div class="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 md:p-8">
+    <h1 class="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">用户管理列表 (前后端分离)</h1>
+    <p class="text-sm text-gray-500 mb-6">
+        本页面通过 **JavaScript** 调用后端 API (<code class="font-mono text-pink-600">http://localhost:8080/users</code>) 获取 **JSON 数据**并进行客户端渲染。
+    </p>
+
+    <div class="overflow-x-auto rounded-lg border border-gray-200">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">邮箱</th>
+            </tr>
+            </thead>
+            <tbody id="userTableBody" class="bg-white divide-y divide-gray-200">
+            <!-- 数据将由 JavaScript 动态加载到此处 -->
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    // 注意：API_URL 必须使用绝对路径，避免在沙箱环境中解析错误。
+    const API_URL = 'http://localhost:8080/users';
+
+    /**
+     * 职责 1: 仅负责数据获取和错误处理。
+     * @returns {Promise<Array>} 返回用户对象数组，失败时返回空数组。
+     */
+    async function loadUsers() {
+        const tableBody = document.getElementById('userTableBody');
+        // 显示加载状态
+        tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-blue-500 font-semibold">正在加载用户数据...</td></tr>';
+
+        try {
+            const response = await fetch(API_URL);
+
+            if (!response.ok) {
+                // 如果 HTTP 状态码不是 2xx，则抛出错误
+                throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+            }
+
+            // 返回解析后的 JSON 数据
+            const users = await response.json();
+            return users;
+        } catch (error) {
+            console.error('Failed to fetch user data:', error);
+            // 显示加载失败信息
+            tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-600 font-semibold">加载失败: ${error.message} (请确保后端服务已运行)</td></tr>`;
+            return [];
+        }
+    }
+
+    /**
+     * 职责 2: 仅负责将数据渲染到 DOM 中。
+     * @param {Array} users - 从 API 获取的用户对象数组。
+     */
+    function renderUsers(users) {
+        const tableBody = document.getElementById('userTableBody');
+
+        if (!users || users.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">没有找到用户数据。</td></tr>';
+            return;
+        }
+
+        let html = '';
+        users.forEach(user => {
+            html += `
+                    <tr class="border-b hover:bg-gray-50 transition duration-150">
+                        <td class="p-4">${user.userId}</td>
+                        <td class="p-4 font-medium text-gray-900">${user.username}</td>
+                        <td class="p-4 text-blue-600">${user.email}</td>
+                    </tr>
+                `;
+        });
+        tableBody.innerHTML = html;
+    }
+
+    /**
+     * 初始化应用的主函数，协调数据获取和渲染。
+     */
+    async function initializeApp() {
+        // 1. 获取数据
+        const userData = await loadUsers();
+        // 2. 渲染数据
+        renderUsers(userData);
+    }
+
+    // 页面加载完成后执行初始化
+    document.addEventListener('DOMContentLoaded', initializeApp)
+
+</script>
+</body>
+</html>
