@@ -16,9 +16,12 @@
 <body class="p-4 md:p-8">
 
 <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 md:p-8">
-    <h1 class="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">用户管理列表 (前后端分离)</h1>
+    <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">用户管理列表 (前后端分离)</h1>
+        <button id="addUserBtn" class="mb-6 ml-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">新增用户</button>
+    </div>
     <p class="text-sm text-gray-500 mb-6">
-        本页面通过 **JavaScript** 调用后端 API (<code class="font-mono text-pink-600">http://localhost:8080/users</code>) 获取 **JSON 数据**并进行客户端渲染。
+        本页面通过 <strong>JavaScript</strong> 调用后端 API (<code class="font-mono text-pink-600">http://localhost:8080/users</code>) 获取 <strong>JSON 数据</strong>并进行客户端渲染。
     </p>
 
     <div class="overflow-x-auto rounded-lg border border-gray-200">
@@ -28,6 +31,7 @@
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">邮箱</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
             </tr>
             </thead>
             <tbody id="userTableBody" class="bg-white divide-y divide-gray-200">
@@ -38,46 +42,60 @@
 
 </div>
 
+<!-- Modal / Form for Create & Edit -->
+<div id="userModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 hidden">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <h2 id="modalTitle" class="text-xl font-semibold mb-4">新增用户</h2>
+        <form id="userForm" class="space-y-4">
+            <input type="hidden" id="userIdInput">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">用户名</label>
+                <input id="usernameInput" type="text" class="mt-1 block w-full border rounded px-3 py-2" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">邮箱</label>
+                <input id="emailInput" type="email" class="mt-1 block w-full border rounded px-3 py-2" required>
+            </div>
+            <div class="flex items-center justify-end space-x-2">
+                <button type="button" id="cancelBtn" class="px-4 py-2 rounded border">取消</button>
+                <button type="submit" id="saveBtn" class="px-4 py-2 bg-blue-600 text-white rounded">保存</button>
+            </div>
+            <p id="formMessage" class="text-sm mt-2"></p>
+        </form>
+    </div>
+</div>
+
 <script>
-    // 注意：API_URL 必须使用绝对路径，避免在沙箱环境中解析错误。
+    // NOTE: 使用绝对路径，确保在不同环境下正确请求
     const API_URL = 'http://localhost:8080/users';
 
-    /**
-     * 职责 1: 仅负责数据获取和错误处理。
-     * @returns {Promise<Array>} 返回用户对象数组，失败时返回空数组。
-     */
-    async function loadUsers() {
+    // 显示加载/错误状态的函数
+    function showTableMessage(message, type = 'info'){
         const tableBody = document.getElementById('userTableBody');
-        // 显示加载状态
-        tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-blue-500 font-semibold">正在加载用户数据...</td></tr>';
+        const color = type === 'error' ? 'text-red-600' : 'text-blue-500';
+        tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 ${color} font-semibold">${message}</td></tr>`;
+    }
 
-        try {
-            const response = await fetch(API_URL);
-
-            if (!response.ok) {
-                // 如果 HTTP 状态码不是 2xx，则抛出错误
-                throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-            }
-
-            // 返回解析后的 JSON 数据
-            const users = await response.json();
+    // 加载用户列表
+    async function loadUsers(){
+        showTableMessage('正在加载用户数据...');
+        try{
+            const res = await fetch(API_URL);
+            if(!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+            const users = await res.json();
+            renderUsers(users);
             return users;
-        } catch (error) {
-            console.error('Failed to fetch user data:', error);
-            // 显示加载失败信息
-            tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-600 font-semibold">加载失败: ${error.message} (请确保后端服务已运行)</td></tr>`;
+        }catch(err){
+            console.error('Failed to fetch users', err);
+            showTableMessage('加载失败: ' + err.message, 'error');
             return [];
         }
     }
 
-    /**
-     * 职责 2: 仅负责将数据渲染到 DOM 中。
-     * @param {Array} users - 从 API 获取的用户对象数组。
-     */
-    function renderUsers(users) {
+    // 渲染用户表格
+    function renderUsers(users){
         const tableBody = document.getElementById('userTableBody');
-
-        if (!users || users.length === 0) {
+        if(!users || users.length === 0){
             tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">没有找到用户数据。</td></tr>';
             return;
         }
@@ -85,28 +103,147 @@
         let html = '';
         users.forEach(user => {
             html += `
-                    <tr class="border-b hover:bg-gray-50 transition duration-150">
-                        <td class="p-4">${user.userId}</td>
-                        <td class="p-4 font-medium text-gray-900">${user.username}</td>
-                        <td class="p-4 text-blue-600">${user.email}</td>
-                    </tr>
-                `;
+                <tr class="border-b hover:bg-gray-50 transition duration-150">
+                    <td class="p-4">${user.userId}</td>
+                    <td class="p-4 font-medium text-gray-900">${user.username}</td>
+                    <td class="p-4 text-blue-600">${user.email}</td>
+                    <td class="p-4 space-x-2">
+                        <button data-id="${user.userId}" class="editBtn px-3 py-1 bg-yellow-400 rounded text-white">编辑</button>
+                        <button data-id="${user.userId}" class="deleteBtn px-3 py-1 bg-red-500 rounded text-white">删除</button>
+                    </td>
+                </tr>
+            `;
         });
         tableBody.innerHTML = html;
+
+        // attach event listeners for edit/delete
+        document.querySelectorAll('.editBtn').forEach(btn => btn.addEventListener('click', onEditClicked));
+        document.querySelectorAll('.deleteBtn').forEach(btn => btn.addEventListener('click', onDeleteClicked));
     }
 
-    /**
-     * 初始化应用的主函数，协调数据获取和渲染。
-     */
-    async function initializeApp() {
-        // 1. 获取数据
-        const userData = await loadUsers();
-        // 2. 渲染数据
-        renderUsers(userData);
+    // 打开/关闭 Modal
+    function openModal(mode='create', user={}){
+        document.getElementById('userModal').classList.remove('hidden');
+        document.getElementById('modalTitle').textContent = mode === 'create' ? '新增用户' : '编辑用户';
+        document.getElementById('userIdInput').value = user.userId || '';
+        document.getElementById('usernameInput').value = user.username || '';
+        document.getElementById('emailInput').value = user.email || '';
+        document.getElementById('formMessage').textContent = '';
+        document.getElementById('usernameInput').focus();
+        document.getElementById('userForm').dataset.mode = mode;
     }
 
-    // 页面加载完成后执行初始化
-    document.addEventListener('DOMContentLoaded', initializeApp)
+    function closeModal(){
+        document.getElementById('userModal').classList.add('hidden');
+    }
+
+    // Edit button handler: fetch user and open modal
+    async function onEditClicked(e){
+        const id = e.currentTarget.dataset.id;
+        try{
+            const res = await fetch(`${API_URL}/${id}`);
+            if(!res.ok) throw new Error(`HTTP ${res.status}`);
+            const user = await res.json();
+            openModal('edit', user);
+        }catch(err){
+            alert('获取用户失败: ' + err.message);
+        }
+    }
+
+    // Delete handler
+    async function onDeleteClicked(e){
+        const id = e.currentTarget.dataset.id;
+        if(!confirm('确定要删除该用户吗？')) return;
+        try{
+            const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            if(!res.ok) throw new Error(`HTTP ${res.status}`);
+            await loadUsers();
+        }catch(err){
+            alert('删除失败: ' + err.message);
+        }
+    }
+
+    // Create user
+    async function createUser(data){
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if(!res.ok){
+            const text = await res.text().catch(()=>null);
+            throw new Error(`HTTP ${res.status} ${res.statusText} ${text||''}`);
+        }
+        return res.json().catch(()=>null);
+    }
+
+    // Update user
+    async function updateUser(id, data){
+        const res = await fetch(`${API_URL}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if(!res.ok){
+            const text = await res.text().catch(()=>null);
+            throw new Error(`HTTP ${res.status} ${res.statusText} ${text||''}`);
+        }
+        return res.json().catch(()=>null);
+    }
+
+    // Form submit handler
+    document.getElementById('userForm').addEventListener('submit', async function(e){
+        e.preventDefault();
+        const mode = e.currentTarget.dataset.mode || 'create';
+        const id = document.getElementById('userIdInput').value;
+        const username = document.getElementById('usernameInput').value.trim();
+        const email = document.getElementById('emailInput').value.trim();
+        const msgEl = document.getElementById('formMessage');
+
+        if(!username || !email){
+            msgEl.textContent = '请填写用户名和邮箱。';
+            msgEl.className = 'text-sm text-red-600';
+            return;
+        }
+
+        msgEl.textContent = '正在保存...';
+        msgEl.className = 'text-sm text-gray-600';
+
+        try{
+            if(mode === 'create'){
+                await createUser({ username, email });
+            }else{
+                await updateUser(id, { username, email });
+            }
+            msgEl.textContent = '保存成功。';
+            msgEl.className = 'text-sm text-green-600';
+            await loadUsers();
+            setTimeout(() => closeModal(), 500);
+        }catch(err){
+            msgEl.textContent = '保存失败: ' + err.message;
+            msgEl.className = 'text-sm text-red-600';
+        }
+    });
+
+    // Cancel button
+    document.getElementById('cancelBtn').addEventListener('click', function(){
+        closeModal();
+    });
+
+    // Add user button
+    document.getElementById('addUserBtn').addEventListener('click', function(){
+        openModal('create');
+    });
+
+    // Close modal when clicking outside the content
+    document.getElementById('userModal').addEventListener('click', function(e){
+        if(e.target === this) closeModal();
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function(){
+        loadUsers();
+    });
 
 </script>
 </body>

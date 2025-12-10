@@ -16,4 +16,4 @@ import org.springframework.stereotype.Repository;
  * 这些方法使得开发人员可以轻松地进行数据库操作，而无需编写大量的样板代码。
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {}
+public interface UserRepository extends JpaRepository<User, Integer> {}

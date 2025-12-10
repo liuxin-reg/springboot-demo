@@ -35,4 +35,45 @@ public class UserService {
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
+
+    /**
+     * 根据用户 ID 获取用户信息。
+     * 调用 UserRepository 的 findById() 方法从数据库中检索指定 ID 的用户记录。
+     * @param id
+     * @return
+     */
+    public User getUserById(Integer id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
+    /**
+     * 创建新用户。
+     * 调用 UserRepository 的 save() 方法将新用户保存到数据库中。
+     * @param user
+     * @return
+     */
+    public User createUser(User user) {
+        return userRepository.save(user);
+    }
+
+    /**
+     * 更新现有用户的信息。
+     * 调用 UserRepository 的 save() 方法将更新后的用户信息保存到数据库中。
+     * @param id
+     * @param user
+     * @return
+     */
+    public User updateUser(Integer id, User user) {
+        user.setUserId(id);
+        return userRepository.save(user);
+    }
+
+    /**
+     * 根据用户 ID 删除用户。
+     * 调用 UserRepository 的 deleteById() 方法从数据库中删除指定 ID 的用户记录。
+     * @param id
+     */
+    public void deleteUserById(Integer id) {
+        userRepository.deleteById(id);
+    }
 }

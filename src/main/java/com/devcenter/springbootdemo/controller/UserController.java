@@ -2,9 +2,7 @@ package com.devcenter.springbootdemo.controller;
 
 import com.devcenter.springbootdemo.domain.User;
 import com.devcenter.springbootdemo.service.UserService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -44,4 +42,43 @@ public class UserController {
         return userService.getAllUsers();
     }
 
+    /**
+     * Get 请求处理方法，根据用户 ID 返回用户信息。
+     * @param userId
+     * @return
+     */
+    @GetMapping("/{userId}")
+    public User getUserById(@PathVariable Integer userId) {
+        return userService.getUserById(userId);
+    }
+
+    /**
+     * Post 请求处理方法，创建新用户。
+     * @param user
+     * @return
+     */
+    @PostMapping
+    public User createUser(@RequestBody User user) {
+        return userService.createUser(user);
+    }
+
+    /**
+     * Put 请求处理方法，更新现有用户的信息。
+     * @param user
+     * @param userId
+     * @return
+     */
+    @PutMapping("/{userId}")
+    public User updateUser(@RequestBody User user, @PathVariable Integer userId) {
+        return userService.updateUser(userId, user);
+    }
+
+    /**
+     * Delete 请求处理方法，删除用户。
+     * @param userId
+     */
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable Integer userId) {
+        userService.deleteUserById(userId);
+    }
 }
