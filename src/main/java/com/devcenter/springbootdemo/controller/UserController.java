@@ -2,6 +2,7 @@ package com.devcenter.springbootdemo.controller;
 
 import com.devcenter.springbootdemo.domain.User;
 import com.devcenter.springbootdemo.service.UserService;
+import com.devcenter.springbootdemo.service.impl.UserServiceJPAImpl;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public class UserController {
     public UserController(UserService userService) {
         this.userService = userService;
     }
+
 
     /**
      * Get 请求处理方法，返回所有用户的信息列表。

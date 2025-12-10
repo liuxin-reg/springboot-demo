@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devcenter.springbootdemo.mapper.UserMapper">
+    <resultMap id="UserResultMap" type="com.devcenter.springbootdemo.domain.User">
+        <id property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="email" column="email"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="UserResultMap">
+        SELECT user_id, username, email FROM users
+    </select>
+
+    <select id="findById" parameterType="int" resultMap="UserResultMap">
+        SELECT user_id, username, email FROM users WHERE user_id = #{userId}
+    </select>
+
+    <insert id="save" parameterType="com.devcenter.springbootdemo.domain.User" useGeneratedKeys="true" keyProperty="userId" keyColumn="user_id">
+        INSERT INTO users (username, email)
+        VALUES (#{username}, #{email})
+    </insert>
+
+    <update id="update" parameterType="com.devcenter.springbootdemo.domain.User">
+        UPDATE users
+        SET username = #{username},
+            email = #{email}
+        WHERE user_id = #{userId}
+    </update>
+
+    <delete id="deleteById" parameterType="int">
+        DELETE FROM users WHERE user_id = #{userId}
+    </delete>
+
+</mapper>

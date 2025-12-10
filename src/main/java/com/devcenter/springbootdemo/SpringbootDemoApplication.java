@@ -1,5 +1,6 @@
 package com.devcenter.springbootdemo;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -14,6 +15,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 3. @ComponentScan：启用组件扫描，自动发现和注册应用程序中的 Spring 组件（如 @Controller、@Service、@Repository 等）。
  */
 @SpringBootApplication
+@MapperScan("com.devcenter.springbootdemo.mapper")
 public class SpringbootDemoApplication {
 
     public static void main(String[] args) {
