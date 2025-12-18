@@ -2,8 +2,12 @@ package com.devcenter.springbootdemo.controller;
 
 import com.devcenter.springbootdemo.domain.User;
 import com.devcenter.springbootdemo.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Enumeration;
 import java.util.List;
 
 /**
@@ -38,7 +42,15 @@ public class UserController {
      * @return 所有用户列表
      */
     @GetMapping()
-    public List<User> getAllUsers() {
+    // Spring Security 会自动从 Authentication 中提取 principal 并转换成你指定的类型
+    public List<User> getAllUsers(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            // 处理未登录情况
+            throw new RuntimeException("用户未登录");
+        }
+        System.out.println("用户名: " + userDetails.getUsername());
+        System.out.println("用户权限: " + userDetails.getAuthorities());
+
         return userService.getAllUsers();
     }
 
@@ -59,6 +71,7 @@ public class UserController {
      */
     @PostMapping
     public User createUser(@RequestBody User user) {
+        user.setPassword("{noop123456}");
         return userService.createUser(user);
     }
 
@@ -70,6 +83,7 @@ public class UserController {
      */
     @PutMapping("/{userId}")
     public User updateUser(@RequestBody User user, @PathVariable Integer userId) {
+        user.setPassword("{noop123456}");
         return userService.updateUser(userId, user);
     }
 
@@ -78,7 +92,7 @@ public class UserController {
      * @param userId
      */
     @DeleteMapping("/{userId}")
-    public void deleteUser(@PathVariable Integer userId) {
+    public void deleteUser(@PathVariable Integer userId, HttpServletRequest request) {
         userService.deleteUserById(userId);
     }
 }

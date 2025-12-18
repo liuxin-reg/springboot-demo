@@ -4,6 +4,8 @@ import com.devcenter.springbootdemo.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 /**
  * Spring 将会自动实现该接口，并将其作为一个 Bean （userRepository）注入到应用程序上下文中。
  * 通过继承 JpaRepository，UserRepository 接口继承了一系列用于操作 User 实体的 CRUD 方法。
@@ -16,4 +18,6 @@ import org.springframework.stereotype.Repository;
  * 这些方法使得开发人员可以轻松地进行数据库操作，而无需编写大量的样板代码。
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, Integer> {}
+public interface UserRepository extends JpaRepository<User, Integer> {
+    Optional<User> findByUsername(String username);
+}

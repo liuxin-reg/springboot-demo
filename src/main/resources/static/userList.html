@@ -65,6 +65,72 @@
     </div>
 </div>
 
+<!-- Logout button + JS fallback for static page (posts to /logout) -->
+<form id="logoutForm" action="/logout" method="post" style="display:inline;">
+  <button id="logoutBtn" type="submit" class="btn btn-secondary">注销</button>
+</form>
+
+<script>
+  // Try to perform CSRF-safe logout:
+  // - If a cookie named XSRF-TOKEN exists, send a fetch POST with X-XSRF-TOKEN header.
+  // - Otherwise, if a meta[name="_csrf"] exists, use its content.
+  // - Fallback: submit the form (may require server configured without CSRF or server will reject).
+  (function() {
+    function readCookie(name) {
+      const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function getCsrfToken() {
+      // common cookie name when using CookieCsrfTokenRepository
+      const byCookie = readCookie('XSRF-TOKEN') || readCookie('X-XSRF-TOKEN');
+      if (byCookie) return { headerName: 'X-XSRF-TOKEN', token: byCookie };
+
+      // meta tag approach (e.g., <meta name="_csrf" content="..."> and <meta name="_csrf_header" content="...">)
+      const metaToken = document.querySelector('meta[name="_csrf"]');
+      const metaHeader = document.querySelector('meta[name="_csrf_header"]');
+      if (metaToken) return { headerName: (metaHeader ? metaHeader.getAttribute('content') : 'X-XSRF-TOKEN'), token: metaToken.getAttribute('content') };
+
+      return null;
+    }
+
+    const form = document.getElementById('logoutForm');
+    const btn = document.getElementById('logoutBtn');
+    if (!form || !btn) return;
+
+    form.addEventListener('submit', function(e) {
+      const csrf = getCsrfToken();
+      if (!csrf) {
+        // No CSRF token available -> allow normal form submit (may be rejected by server if CSRF enabled)
+        return;
+      }
+
+      // Prevent normal submit and use fetch with CSRF header
+      e.preventDefault();
+      fetch(form.action, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          [csrf.headerName]: csrf.token,
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+        body: '' // body can be empty for logout
+      }).then(function(resp) {
+        // On success, redirect to homepage or login page. Adjust as needed.
+        if (resp.redirected) {
+          window.location.href = resp.url;
+        } else {
+          // common Spring Security behavior: return 200 then redirect client
+          window.location.href = '/login?logout';
+        }
+      }).catch(function() {
+        // fallback to normal submit if fetch fails
+        form.submit();
+      });
+    });
+  })();
+</script>
+
 <script>
     // NOTE: 使用绝对路径，确保在不同环境下正确请求
     const API_URL = 'http://localhost:8080/users';

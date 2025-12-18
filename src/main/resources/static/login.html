@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Login</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f7f7f7; }
+    .container { width: 320px; margin: 80px auto; padding: 24px; background: white; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.06);}
+    label { display:block; margin-bottom:6px; font-weight:600; }
+    input[type=text], input[type=password] { width:100%; padding:8px 10px; margin-bottom:12px; border:1px solid #ddd; border-radius:4px; }
+    button { width:100%; padding:10px; background:#1976d2; color:white; border:none; border-radius:4px; font-size:16px; }
+    .note { margin-top:12px; font-size:13px; color:#666 }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Sign in</h2>
+    <form method="post" action="/login">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" required autofocus />
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required />
+
+      <button type="submit">Sign in</button>
+    </form>
+  </div>
+</body>
+</html>
+
